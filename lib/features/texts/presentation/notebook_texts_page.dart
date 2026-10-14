@@ -6,18 +6,22 @@ import '../domain/dialogue_file_picker.dart';
 import '../domain/dialogue_parser.dart';
 import '../domain/import_dialogue_file.dart';
 import '../domain/text_repository.dart';
+import '../domain/text_to_speech.dart';
+import 'dialogue_reader_page.dart';
 
 class NotebookTextsPage extends StatefulWidget {
   const NotebookTextsPage({
     required this.notebook,
     required this.textRepository,
     required this.filePicker,
+    required this.textToSpeech,
     super.key,
   });
 
   final Notebook notebook;
   final TextRepository textRepository;
   final DialogueFilePicker filePicker;
+  final TextToSpeech textToSpeech;
 
   @override
   State<NotebookTextsPage> createState() => _NotebookTextsPageState();
@@ -144,7 +148,20 @@ class _NotebookTextsPageState extends State<NotebookTextsPage> {
                 ),
                 itemCount: texts.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => _TextCard(text: texts[index]),
+                itemBuilder: (context, index) {
+                  final text = texts[index];
+                  return _TextCard(
+                    text: text,
+                    onOpen: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => DialogueReaderPage(
+                          text: text,
+                          textToSpeech: widget.textToSpeech,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -165,9 +182,10 @@ class _NotebookTextsPageState extends State<NotebookTextsPage> {
 }
 
 class _TextCard extends StatelessWidget {
-  const _TextCard({required this.text});
+  const _TextCard({required this.text, required this.onOpen});
 
   final ImportedText text;
+  final VoidCallback onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -182,46 +200,50 @@ class _TextCard extends StatelessWidget {
     ];
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.article_outlined),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    dialogue.title,
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              details.join(' • '),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            if (dialogue.tags.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  for (final tag in dialogue.tags)
-                    Chip(
-                      label: Text(tag),
-                      visualDensity: VisualDensity.compact,
+                  const Icon(Icons.article_outlined),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      dialogue.title,
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
+                  ),
                 ],
               ),
+              const SizedBox(height: 8),
+              Text(
+                details.join(' • '),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (dialogue.tags.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final tag in dialogue.tags)
+                      Chip(
+                        label: Text(tag),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

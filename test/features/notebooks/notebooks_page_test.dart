@@ -9,6 +9,8 @@ import 'package:lingo_notes/features/texts/domain/dialogue.dart';
 import 'package:lingo_notes/features/texts/domain/dialogue_file_picker.dart';
 import 'package:lingo_notes/features/texts/domain/text_repository.dart';
 
+import '../../support/fake_text_to_speech.dart';
+
 void main() {
   testWidgets('cria um caderno pela tela inicial', (tester) async {
     final repository = FakeNotebookRepository();
@@ -51,6 +53,7 @@ Widget _buildApp(NotebookRepository repository) {
     notebookRepository: repository,
     textRepository: _EmptyTextRepository(),
     filePicker: const _CancelledFilePicker(),
+    textToSpeech: FakeTextToSpeech(),
   );
 }
 

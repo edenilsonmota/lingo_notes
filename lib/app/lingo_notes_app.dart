@@ -4,18 +4,21 @@ import '../features/notebooks/domain/notebook_repository.dart';
 import '../features/notebooks/presentation/notebooks_page.dart';
 import '../features/texts/domain/dialogue_file_picker.dart';
 import '../features/texts/domain/text_repository.dart';
+import '../features/texts/domain/text_to_speech.dart';
 
 class LingoNotesApp extends StatelessWidget {
   const LingoNotesApp({
     required this.notebookRepository,
     required this.textRepository,
     required this.filePicker,
+    required this.textToSpeech,
     super.key,
   });
 
   final NotebookRepository notebookRepository;
   final TextRepository textRepository;
   final DialogueFilePicker filePicker;
+  final TextToSpeech textToSpeech;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +44,7 @@ class LingoNotesApp extends StatelessWidget {
         repository: notebookRepository,
         textRepository: textRepository,
         filePicker: filePicker,
+        textToSpeech: textToSpeech,
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../texts/domain/dialogue_file_picker.dart';
 import '../../texts/domain/text_repository.dart';
+import '../../texts/domain/text_to_speech.dart';
 import '../../texts/presentation/notebook_texts_page.dart';
 import '../domain/notebook.dart';
 import '../domain/notebook_repository.dart';
@@ -12,12 +13,14 @@ class NotebooksPage extends StatefulWidget {
     required this.repository,
     required this.textRepository,
     required this.filePicker,
+    required this.textToSpeech,
     super.key,
   });
 
   final NotebookRepository repository;
   final TextRepository textRepository;
   final DialogueFilePicker filePicker;
+  final TextToSpeech textToSpeech;
 
   @override
   State<NotebooksPage> createState() => _NotebooksPageState();
@@ -194,6 +197,7 @@ class _NotebooksPageState extends State<NotebooksPage> {
                             notebook: notebook,
                             textRepository: widget.textRepository,
                             filePicker: widget.filePicker,
+                            textToSpeech: widget.textToSpeech,
                           ),
                         ),
                       ),

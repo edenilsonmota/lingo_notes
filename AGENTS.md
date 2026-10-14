@@ -63,7 +63,16 @@ A segunda etapa também está implementada:
 - exclusão transacional dos textos quando o caderno é excluído;
 - testes de validação, garantia de não persistência e fluxo da interface.
 
-Ainda não existem leitor, TTS ou vocabulário. Não simule essas funções nem conecte APIs externas antes das etapas correspondentes.
+A terceira etapa também está implementada:
+
+- leitor de cada linha em inglês com tradução em português opcional;
+- segmentos alinhados, tocáveis e destacados nos dois idiomas;
+- TTS do Android por linha ou texto completo, montado somente com tokens em inglês;
+- seleção de voz inglesa e controle de velocidade;
+- pressão longa em palavra inglesa com indicação das futuras ações de consulta e salvamento;
+- regras de leitura e alinhamento no domínio, integração de TTS injetável em `data` e testes de domínio/interface.
+
+Ainda não existe vocabulário persistente. Até a etapa correspondente, as ações de consultar e salvar palavra devem permanecer claramente indisponíveis e não podem simular persistência ou consulta externa.
 
 ## Estrutura
 
@@ -79,9 +88,9 @@ lib/
       data/                         # records e repositórios Isar
       presentation/                 # páginas, diálogos e widgets
     texts/
-      domain/                       # diálogo, validação e caso de importação
-      data/                         # seleção de arquivo e persistência Isar
-      presentation/                 # listagem e fluxo de importação
+      domain/                       # diálogo, validação, leitura e contratos
+      data/                         # arquivos, Isar e adaptação do TTS
+      presentation/                 # importação, listagem e leitor EN/PT
 context/                            # especificação e schema fornecidos
 test/
   features/                         # testes espelhando as funcionalidades
@@ -113,7 +122,7 @@ Todo caderno deve preservar:
 
 Alterações persistentes devem passar por `NotebookRepository`. Ao editar, atualizar `updatedAt`. Exclusões sempre exigem confirmação visível.
 
-## Contrato de importação — próxima etapa
+## Contrato de importação
 
 O formato aceito deve ser exatamente `english-notebook-dialogue`, versão `1.0`. Exigir `id`, `title`, `contentType`, `sourceLanguage`, `targetLanguage` e ao menos uma linha.
 
