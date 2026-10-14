@@ -1,5 +1,5 @@
 name: lingo_notes
-description: "A new Flutter project."
+description: "Lingo Notes: an offline-first app for studying English."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -34,10 +34,17 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  isar_community: ^3.3.2
+  isar_community_flutter_libs: ^3.3.2
+  path_provider: ^2.1.6
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  build_runner: ^2.15.1
+  isar_community_generator: ^3.3.2
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
