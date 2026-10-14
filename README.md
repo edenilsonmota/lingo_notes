@@ -1,18 +1,46 @@
-# lingo_notes
+# Lingo Notes
 
-A new Flutter project.
+Aplicativo Android offline-first para estudar inglês com textos bilíngues, áudio e vocabulário pessoal.
 
-## Getting Started
+## Funcionalidades
 
-This project is a starting point for a Flutter application.
+- criação e organização de cadernos;
+- importação de textos no formato Lingo Notes Dialogue JSON v1.0;
+- leitura alinhada em inglês e português;
+- destaque de segmentos equivalentes nos dois idiomas;
+- reprodução em inglês pelo TTS do Android;
+- vocabulário global com significado e estados de aprendizagem;
+- persistência local, sem necessidade de conta ou servidor.
 
-A few resources to get you started if this is your first Flutter project:
+## Tecnologias
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- Flutter e Material 3;
+- Isar Community para persistência local;
+- `flutter_tts` para síntese de voz;
+- testes de domínio e interface com Flutter Test.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# lingo_notes
+## Executar o projeto
+
+Com Flutter e um dispositivo ou emulador Android configurados:
+
+```bash
+flutter pub get
+flutter run
+```
+
+Para validar o projeto:
+
+```bash
+flutter analyze
+flutter test
+```
+
+Para gerar um APK de desenvolvimento:
+
+```bash
+flutter build apk --debug
+```
+
+## Arquitetura
+
+O código é organizado por funcionalidade em `lib/features`, separando regras de domínio, persistência e apresentação. As decisões e os contratos para futuras implementações estão documentados em `AGENTS.md`.
