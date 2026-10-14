@@ -19,29 +19,34 @@ const VocabularyEntryRecordSchema = CollectionSchema(
   id: 4831196267557630155,
   properties: {
     r'meaning': PropertySchema(id: 0, name: r'meaning', type: IsarType.string),
-    r'normalizedWord': PropertySchema(
+    r'meaningSource': PropertySchema(
       id: 1,
+      name: r'meaningSource',
+      type: IsarType.string,
+    ),
+    r'normalizedWord': PropertySchema(
+      id: 2,
       name: r'normalizedWord',
       type: IsarType.string,
     ),
     r'savedAt': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'savedAt',
       type: IsarType.dateTime,
     ),
     r'sourceTextIds': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'sourceTextIds',
       type: IsarType.stringList,
     ),
-    r'status': PropertySchema(id: 4, name: r'status', type: IsarType.string),
+    r'status': PropertySchema(id: 5, name: r'status', type: IsarType.string),
     r'updatedAt': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
-    r'uuid': PropertySchema(id: 6, name: r'uuid', type: IsarType.string),
-    r'word': PropertySchema(id: 7, name: r'word', type: IsarType.string),
+    r'uuid': PropertySchema(id: 7, name: r'uuid', type: IsarType.string),
+    r'word': PropertySchema(id: 8, name: r'word', type: IsarType.string),
   },
 
   estimateSize: _vocabularyEntryRecordEstimateSize,
@@ -93,6 +98,12 @@ int _vocabularyEntryRecordEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.meaning.length * 3;
+  {
+    final value = object.meaningSource;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.normalizedWord.length * 3;
   bytesCount += 3 + object.sourceTextIds.length * 3;
   {
@@ -114,13 +125,14 @@ void _vocabularyEntryRecordSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.meaning);
-  writer.writeString(offsets[1], object.normalizedWord);
-  writer.writeDateTime(offsets[2], object.savedAt);
-  writer.writeStringList(offsets[3], object.sourceTextIds);
-  writer.writeString(offsets[4], object.status);
-  writer.writeDateTime(offsets[5], object.updatedAt);
-  writer.writeString(offsets[6], object.uuid);
-  writer.writeString(offsets[7], object.word);
+  writer.writeString(offsets[1], object.meaningSource);
+  writer.writeString(offsets[2], object.normalizedWord);
+  writer.writeDateTime(offsets[3], object.savedAt);
+  writer.writeStringList(offsets[4], object.sourceTextIds);
+  writer.writeString(offsets[5], object.status);
+  writer.writeDateTime(offsets[6], object.updatedAt);
+  writer.writeString(offsets[7], object.uuid);
+  writer.writeString(offsets[8], object.word);
 }
 
 VocabularyEntryRecord _vocabularyEntryRecordDeserialize(
@@ -132,13 +144,14 @@ VocabularyEntryRecord _vocabularyEntryRecordDeserialize(
   final object = VocabularyEntryRecord();
   object.id = id;
   object.meaning = reader.readString(offsets[0]);
-  object.normalizedWord = reader.readString(offsets[1]);
-  object.savedAt = reader.readDateTime(offsets[2]);
-  object.sourceTextIds = reader.readStringList(offsets[3]) ?? [];
-  object.status = reader.readString(offsets[4]);
-  object.updatedAt = reader.readDateTime(offsets[5]);
-  object.uuid = reader.readString(offsets[6]);
-  object.word = reader.readString(offsets[7]);
+  object.meaningSource = reader.readStringOrNull(offsets[1]);
+  object.normalizedWord = reader.readString(offsets[2]);
+  object.savedAt = reader.readDateTime(offsets[3]);
+  object.sourceTextIds = reader.readStringList(offsets[4]) ?? [];
+  object.status = reader.readString(offsets[5]);
+  object.updatedAt = reader.readDateTime(offsets[6]);
+  object.uuid = reader.readString(offsets[7]);
+  object.word = reader.readString(offsets[8]);
   return object;
 }
 
@@ -152,18 +165,20 @@ P _vocabularyEntryRecordDeserializeProp<P>(
     case 0:
       return (reader.readString(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 4:
-      return (reader.readString(offset)) as P;
-    case 5:
       return (reader.readDateTime(offset)) as P;
-    case 6:
+    case 4:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 5:
       return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readDateTime(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -755,6 +770,213 @@ extension VocabularyEntryRecordQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
         FilterCondition.greaterThan(property: r'meaning', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'meaningSource'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'meaningSource'),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'meaningSource',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'meaningSource',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'meaningSource',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'meaningSource',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'meaningSource',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'meaningSource',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'meaningSource',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'meaningSource',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'meaningSource', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    VocabularyEntryRecord,
+    VocabularyEntryRecord,
+    QAfterFilterCondition
+  >
+  meaningSourceIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'meaningSource', value: ''),
       );
     });
   }
@@ -1917,6 +2139,20 @@ extension VocabularyEntryRecordQuerySortBy
   }
 
   QueryBuilder<VocabularyEntryRecord, VocabularyEntryRecord, QAfterSortBy>
+  sortByMeaningSource() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'meaningSource', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VocabularyEntryRecord, VocabularyEntryRecord, QAfterSortBy>
+  sortByMeaningSourceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'meaningSource', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VocabularyEntryRecord, VocabularyEntryRecord, QAfterSortBy>
   sortByNormalizedWord() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'normalizedWord', Sort.asc);
@@ -2032,6 +2268,20 @@ extension VocabularyEntryRecordQuerySortThenBy
   }
 
   QueryBuilder<VocabularyEntryRecord, VocabularyEntryRecord, QAfterSortBy>
+  thenByMeaningSource() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'meaningSource', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VocabularyEntryRecord, VocabularyEntryRecord, QAfterSortBy>
+  thenByMeaningSourceDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'meaningSource', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VocabularyEntryRecord, VocabularyEntryRecord, QAfterSortBy>
   thenByNormalizedWord() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'normalizedWord', Sort.asc);
@@ -2126,6 +2376,16 @@ extension VocabularyEntryRecordQueryWhereDistinct
   }
 
   QueryBuilder<VocabularyEntryRecord, VocabularyEntryRecord, QDistinct>
+  distinctByMeaningSource({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'meaningSource',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
+  QueryBuilder<VocabularyEntryRecord, VocabularyEntryRecord, QDistinct>
   distinctByNormalizedWord({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(
@@ -2195,6 +2455,13 @@ extension VocabularyEntryRecordQueryProperty
   meaningProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'meaning');
+    });
+  }
+
+  QueryBuilder<VocabularyEntryRecord, String?, QQueryOperations>
+  meaningSourceProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'meaningSource');
     });
   }
 

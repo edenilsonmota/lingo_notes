@@ -23,6 +23,7 @@ class VocabularyEntry {
     required this.word,
     required this.normalizedWord,
     required this.meaning,
+    this.meaningSource,
     required this.status,
     required this.savedAt,
     required this.updatedAt,
@@ -33,6 +34,7 @@ class VocabularyEntry {
   final String word;
   final String normalizedWord;
   final String meaning;
+  final String? meaningSource;
   final VocabularyStatus status;
   final DateTime savedAt;
   final DateTime updatedAt;
@@ -41,6 +43,7 @@ class VocabularyEntry {
   VocabularyEntry copyWith({
     String? word,
     String? meaning,
+    String? meaningSource,
     VocabularyStatus? status,
     DateTime? updatedAt,
     List<String>? sourceTextIds,
@@ -50,6 +53,7 @@ class VocabularyEntry {
       word: word ?? this.word,
       normalizedWord: normalizedWord,
       meaning: meaning ?? this.meaning,
+      meaningSource: meaningSource ?? this.meaningSource,
       status: status ?? this.status,
       savedAt: savedAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -72,6 +76,7 @@ VocabularyEntry createOrMergeVocabularyEntry({
   required String id,
   required String word,
   required String meaning,
+  String? meaningSource,
   required String sourceTextId,
   required DateTime now,
   VocabularyEntry? existing,
@@ -89,6 +94,7 @@ VocabularyEntry createOrMergeVocabularyEntry({
       word: trimmedWord,
       normalizedWord: normalizedWord,
       meaning: trimmedMeaning,
+      meaningSource: trimmedMeaning.isEmpty ? null : meaningSource,
       status: VocabularyStatus.unreviewed,
       savedAt: now.toUtc(),
       updatedAt: now.toUtc(),
@@ -97,8 +103,15 @@ VocabularyEntry createOrMergeVocabularyEntry({
   }
 
   final sources = {...existing.sourceTextIds, sourceTextId}.toList()..sort();
+  final preserveManualMeaning =
+      existing.meaningSource == 'manual' && meaningSource != 'manual';
   return existing.copyWith(
-    meaning: trimmedMeaning.isEmpty ? existing.meaning : trimmedMeaning,
+    meaning: trimmedMeaning.isEmpty || preserveManualMeaning
+        ? existing.meaning
+        : trimmedMeaning,
+    meaningSource: trimmedMeaning.isEmpty || preserveManualMeaning
+        ? existing.meaningSource
+        : meaningSource,
     updatedAt: now.toUtc(),
     sourceTextIds: sources,
   );

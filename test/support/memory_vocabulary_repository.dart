@@ -21,6 +21,7 @@ class MemoryVocabularyRepository implements VocabularyRepository {
   Future<VocabularyEntry> saveWord({
     required String word,
     required String meaning,
+    String? meaningSource,
     required String sourceTextId,
   }) async {
     final normalized = normalizeVocabularyWord(word);
@@ -32,6 +33,7 @@ class MemoryVocabularyRepository implements VocabularyRepository {
       id: existing?.id ?? 'word-${_nextId++}',
       word: word,
       meaning: meaning,
+      meaningSource: meaningSource,
       sourceTextId: sourceTextId,
       now: DateTime.utc(2026, 10, 14, 12, _nextId),
       existing: existing,

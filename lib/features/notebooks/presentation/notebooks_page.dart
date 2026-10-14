@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../ai_generation/domain/ai_generation_gateway.dart';
+import '../../ai_generation/domain/ai_source_file_picker.dart';
+import '../../ai_generation/presentation/ai_generation_page.dart';
 import '../../texts/domain/dialogue_file_picker.dart';
 import '../../texts/domain/text_repository.dart';
 import '../../texts/domain/text_to_speech.dart';
 import '../../texts/presentation/notebook_texts_page.dart';
 import '../../vocabulary/domain/vocabulary_repository.dart';
+import '../../vocabulary/domain/word_lookup_repository.dart';
 import '../../vocabulary/presentation/vocabulary_page.dart';
 import '../domain/notebook.dart';
 import '../domain/notebook_repository.dart';
@@ -17,6 +21,10 @@ class NotebooksPage extends StatefulWidget {
     required this.filePicker,
     required this.textToSpeech,
     required this.vocabularyRepository,
+    required this.wordLookupRepository,
+    required this.aiGenerationGateway,
+    required this.aiSourceFilePicker,
+    required this.aiGenerationMetadataRepository,
     super.key,
   });
 
@@ -25,6 +33,10 @@ class NotebooksPage extends StatefulWidget {
   final DialogueFilePicker filePicker;
   final TextToSpeech textToSpeech;
   final VocabularyRepository vocabularyRepository;
+  final WordLookupRepository wordLookupRepository;
+  final AiGenerationGateway aiGenerationGateway;
+  final AiSourceFilePicker aiSourceFilePicker;
+  final AiGenerationMetadataRepository aiGenerationMetadataRepository;
 
   @override
   State<NotebooksPage> createState() => _NotebooksPageState();
@@ -134,6 +146,21 @@ class _NotebooksPageState extends State<NotebooksPage> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Gerar com IA',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => AiGenerationPage(
+                  notebookRepository: widget.repository,
+                  textRepository: widget.textRepository,
+                  filePicker: widget.aiSourceFilePicker,
+                  gateway: widget.aiGenerationGateway,
+                  metadataRepository: widget.aiGenerationMetadataRepository,
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.auto_awesome),
+          ),
+          IconButton(
             tooltip: 'Abrir vocabulário',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -213,6 +240,7 @@ class _NotebooksPageState extends State<NotebooksPage> {
                             filePicker: widget.filePicker,
                             textToSpeech: widget.textToSpeech,
                             vocabularyRepository: widget.vocabularyRepository,
+                            wordLookupRepository: widget.wordLookupRepository,
                           ),
                         ),
                       ),

@@ -51,4 +51,33 @@ void main() {
     expect(merged.meaning, existing.meaning);
     expect(merged.sourceTextIds, ['text-1', 'text-2']);
   });
+
+  test('não sobrescreve uma correção manual com tradução automática', () {
+    final date = DateTime.utc(2026, 10, 14);
+    final existing = VocabularyEntry(
+      id: 'word-1',
+      word: 'book',
+      normalizedWord: 'book',
+      meaning: 'livro corrigido',
+      meaningSource: 'manual',
+      status: VocabularyStatus.known,
+      savedAt: date,
+      updatedAt: date,
+      sourceTextIds: const ['text-1'],
+    );
+
+    final merged = createOrMergeVocabularyEntry(
+      id: 'ignored',
+      word: 'book',
+      meaning: 'reservar',
+      meaningSource: 'mymemory',
+      sourceTextId: 'text-2',
+      now: date.add(const Duration(days: 1)),
+      existing: existing,
+    );
+
+    expect(merged.meaning, 'livro corrigido');
+    expect(merged.meaningSource, 'manual');
+    expect(merged.sourceTextIds, ['text-1', 'text-2']);
+  });
 }

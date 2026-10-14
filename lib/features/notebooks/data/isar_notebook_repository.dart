@@ -29,7 +29,7 @@ class IsarNotebookRepository implements NotebookRepository {
   }
 
   @override
-  Future<void> create({
+  Future<Notebook> create({
     required String name,
     required String description,
     required int colorValue,
@@ -53,6 +53,7 @@ class IsarNotebookRepository implements NotebookRepository {
     await _isar.writeTxn(() async {
       await _isar.notebookRecords.put(NotebookRecord.fromDomain(notebook));
     });
+    return notebook;
   }
 
   @override

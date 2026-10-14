@@ -164,6 +164,15 @@ class _VocabularyCard extends StatelessWidget {
             if (entry.meaning.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(entry.meaning),
+              if (entry.meaningSource == 'mymemory') ...[
+                const SizedBox(height: 3),
+                Text(
+                  'Tradução automática • MyMemory',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ],
             const SizedBox(height: 14),
             SegmentedButton<VocabularyStatus>(

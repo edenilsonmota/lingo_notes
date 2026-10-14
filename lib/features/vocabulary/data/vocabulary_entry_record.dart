@@ -16,6 +16,7 @@ class VocabularyEntryRecord {
 
   late String word;
   String meaning = '';
+  String? meaningSource;
   String status = VocabularyStatus.unreviewed.name;
   late DateTime savedAt;
   late DateTime updatedAt;
@@ -27,6 +28,7 @@ class VocabularyEntryRecord {
       word: word,
       normalizedWord: normalizedWord,
       meaning: meaning,
+      meaningSource: meaningSource,
       status: VocabularyStatus.fromStorage(status),
       savedAt: savedAt,
       updatedAt: updatedAt,
@@ -44,6 +46,7 @@ class VocabularyEntryRecord {
       ..word = entry.word
       ..normalizedWord = entry.normalizedWord
       ..meaning = entry.meaning
+      ..meaningSource = entry.meaningSource
       ..status = entry.status.name
       ..savedAt = entry.savedAt
       ..updatedAt = entry.updatedAt

@@ -8,6 +8,7 @@ import '../domain/import_dialogue_file.dart';
 import '../domain/text_repository.dart';
 import '../domain/text_to_speech.dart';
 import '../../vocabulary/domain/vocabulary_repository.dart';
+import '../../vocabulary/domain/word_lookup_repository.dart';
 import 'dialogue_reader_page.dart';
 
 class NotebookTextsPage extends StatefulWidget {
@@ -17,6 +18,7 @@ class NotebookTextsPage extends StatefulWidget {
     required this.filePicker,
     required this.textToSpeech,
     required this.vocabularyRepository,
+    required this.wordLookupRepository,
     super.key,
   });
 
@@ -25,6 +27,7 @@ class NotebookTextsPage extends StatefulWidget {
   final DialogueFilePicker filePicker;
   final TextToSpeech textToSpeech;
   final VocabularyRepository vocabularyRepository;
+  final WordLookupRepository wordLookupRepository;
 
   @override
   State<NotebookTextsPage> createState() => _NotebookTextsPageState();
@@ -161,6 +164,7 @@ class _NotebookTextsPageState extends State<NotebookTextsPage> {
                           text: text,
                           textToSpeech: widget.textToSpeech,
                           vocabularyRepository: widget.vocabularyRepository,
+                          wordLookupRepository: widget.wordLookupRepository,
                         ),
                       ),
                     ),

@@ -9,6 +9,7 @@ import 'package:lingo_notes/features/vocabulary/domain/vocabulary_entry.dart';
 
 import '../../support/fake_text_to_speech.dart';
 import '../../support/memory_vocabulary_repository.dart';
+import '../../support/memory_word_lookup_repository.dart';
 import 'dialogue_parser_test.dart' show validDialogueJson;
 
 void main() {
@@ -79,23 +80,25 @@ void main() {
     expect(speech.calls.last.text, contains('What do you like to do'));
   });
 
-  testWidgets('expõe ações de palavra com toque longo', (tester) async {
+  testWidgets('consulta somente após toque longo na palavra', (tester) async {
     final speech = FakeTextToSpeech();
-    await tester.pumpWidget(readerApp(speech));
+    final lookup = MemoryWordLookupRepository();
+    await tester.pumpWidget(readerApp(speech, wordLookupRepository: lookup));
     await tester.pumpAndSettle();
+    expect(lookup.calls, isEmpty);
 
     const wordKey = ValueKey('segment-english-line-001-s1-0');
     await tester.longPress(find.byKey(wordKey));
     await tester.pumpAndSettle();
 
-    expect(find.text('What'), findsWidgets);
-    expect(find.text('Consultar palavra'), findsOneWidget);
-    expect(find.text('Salvar no vocabulário'), findsOneWidget);
+    expect(lookup.calls, ['what']);
+    expect(find.text('o que'), findsOneWidget);
+    expect(find.text('Tradução automática • MyMemory'), findsOneWidget);
+    expect(find.text('Ouvir palavra'), findsOneWidget);
+    expect(find.text('Salvar palavra'), findsOneWidget);
   });
 
-  testWidgets('salva palavra com significado e origem do texto', (
-    tester,
-  ) async {
+  testWidgets('salva a tradução automática e sua origem', (tester) async {
     final repository = MemoryVocabularyRepository();
     await tester.pumpWidget(
       readerApp(FakeTextToSpeech(), vocabularyRepository: repository),
@@ -105,19 +108,35 @@ void main() {
     const wordKey = ValueKey('segment-english-line-001-s1-0');
     await tester.longPress(find.byKey(wordKey));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'O que');
-    final saveButton = find.widgetWithText(
-      FilledButton,
-      'Salvar no vocabulário',
-    );
+    final saveButton = find.widgetWithText(FilledButton, 'Salvar palavra');
     await tester.ensureVisible(saveButton);
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
     expect(repository.entries, hasLength(1));
     expect(repository.entries.single.normalizedWord, 'what');
-    expect(repository.entries.single.meaning, 'O que');
+    expect(repository.entries.single.meaning, 'o que');
+    expect(repository.entries.single.meaningSource, 'mymemory');
     expect(repository.entries.single.sourceTextIds, ['text-1']);
+  });
+
+  testWidgets('envia somente a palavra normalizada ao TTS en-US', (
+    tester,
+  ) async {
+    final speech = FakeTextToSpeech();
+    await tester.pumpWidget(readerApp(speech));
+    await tester.pumpAndSettle();
+
+    const wordKey = ValueKey('segment-english-line-001-s1-0');
+    await tester.longPress(find.byKey(wordKey));
+    await tester.pumpAndSettle();
+    final speakButton = find.widgetWithText(OutlinedButton, 'Ouvir palavra');
+    await tester.ensureVisible(speakButton);
+    await tester.tap(speakButton);
+    await tester.pumpAndSettle();
+
+    expect(speech.calls.single.text, 'what');
+    expect(speech.calls.single.voice?.locale, 'en-US');
   });
 
   testWidgets('indica no leitor o estado de palavra já salva', (tester) async {
@@ -149,6 +168,7 @@ void main() {
 Widget readerApp(
   FakeTextToSpeech speech, {
   MemoryVocabularyRepository? vocabularyRepository,
+  MemoryWordLookupRepository? wordLookupRepository,
 }) {
   final dialogue = const DialogueParser().parse(
     jsonEncode(validDialogueJson()),
@@ -165,6 +185,8 @@ Widget readerApp(
       textToSpeech: speech,
       vocabularyRepository:
           vocabularyRepository ?? MemoryVocabularyRepository(),
+      wordLookupRepository:
+          wordLookupRepository ?? MemoryWordLookupRepository(),
     ),
   );
 }

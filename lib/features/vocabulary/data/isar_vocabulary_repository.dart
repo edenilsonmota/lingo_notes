@@ -27,6 +27,7 @@ class IsarVocabularyRepository implements VocabularyRepository {
   Future<VocabularyEntry> saveWord({
     required String word,
     required String meaning,
+    String? meaningSource,
     required String sourceTextId,
   }) async {
     final normalizedWord = normalizeVocabularyWord(word);
@@ -44,6 +45,7 @@ class IsarVocabularyRepository implements VocabularyRepository {
         id: existingRecord?.uuid ?? _uuid.v4(),
         word: word,
         meaning: meaning,
+        meaningSource: meaningSource,
         sourceTextId: sourceTextId,
         now: DateTime.now(),
         existing: existingRecord?.toDomain(),

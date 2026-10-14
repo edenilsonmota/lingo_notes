@@ -8,9 +8,12 @@ import 'package:lingo_notes/features/notebooks/domain/notebook_repository.dart';
 import 'package:lingo_notes/features/texts/domain/dialogue.dart';
 import 'package:lingo_notes/features/texts/domain/dialogue_file_picker.dart';
 import 'package:lingo_notes/features/texts/domain/text_repository.dart';
+import 'package:lingo_notes/features/ai_generation/data/simulated_ai_generation_gateway.dart';
 
 import '../../support/fake_text_to_speech.dart';
+import '../../support/memory_ai_generation.dart';
 import '../../support/memory_vocabulary_repository.dart';
+import '../../support/memory_word_lookup_repository.dart';
 
 void main() {
   testWidgets('cria um caderno pela tela inicial', (tester) async {
@@ -56,6 +59,10 @@ Widget _buildApp(NotebookRepository repository) {
     filePicker: const _CancelledFilePicker(),
     textToSpeech: FakeTextToSpeech(),
     vocabularyRepository: MemoryVocabularyRepository(),
+    wordLookupRepository: MemoryWordLookupRepository(),
+    aiGenerationGateway: SimulatedAiGenerationGateway(),
+    aiSourceFilePicker: const CancelledAiSourceFilePicker(),
+    aiGenerationMetadataRepository: MemoryAiGenerationMetadataRepository(),
   );
 }
 
@@ -93,25 +100,25 @@ class FakeNotebookRepository implements NotebookRepository {
   void _emit() => _changes.add(List.unmodifiable(items));
 
   @override
-  Future<void> create({
+  Future<Notebook> create({
     required String name,
     required String description,
     required int colorValue,
   }) async {
     final now = DateTime.utc(2026, 10, 14);
-    items.add(
-      Notebook(
-        id: 'notebook-${items.length + 1}',
-        name: name,
-        description: description,
-        colorValue: colorValue,
-        createdAt: now,
-        updatedAt: now,
-        sortMode: NotebookSortMode.manual,
-        position: items.length,
-      ),
+    final notebook = Notebook(
+      id: 'notebook-${items.length + 1}',
+      name: name,
+      description: description,
+      colorValue: colorValue,
+      createdAt: now,
+      updatedAt: now,
+      sortMode: NotebookSortMode.manual,
+      position: items.length,
     );
+    items.add(notebook);
     _emit();
+    return notebook;
   }
 
   @override

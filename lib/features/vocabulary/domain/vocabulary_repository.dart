@@ -6,6 +6,7 @@ abstract interface class VocabularyRepository {
   Future<VocabularyEntry> saveWord({
     required String word,
     required String meaning,
+    String? meaningSource,
     required String sourceTextId,
   });
 

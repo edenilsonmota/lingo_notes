@@ -3,7 +3,7 @@ import 'notebook.dart';
 abstract interface class NotebookRepository {
   Stream<List<Notebook>> watchAll();
 
-  Future<void> create({
+  Future<Notebook> create({
     required String name,
     required String description,
     required int colorValue,

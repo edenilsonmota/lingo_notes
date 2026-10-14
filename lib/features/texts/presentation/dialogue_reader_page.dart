@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../vocabulary/domain/vocabulary_entry.dart';
 import '../../vocabulary/domain/vocabulary_repository.dart';
+import '../../vocabulary/domain/word_lookup_repository.dart';
+import '../../vocabulary/presentation/word_lookup_sheet.dart';
 import '../domain/dialogue.dart';
 import '../domain/dialogue_reader.dart';
 import '../domain/text_to_speech.dart';
@@ -13,12 +15,14 @@ class DialogueReaderPage extends StatefulWidget {
     required this.text,
     required this.textToSpeech,
     required this.vocabularyRepository,
+    required this.wordLookupRepository,
     super.key,
   });
 
   final ImportedText text;
   final TextToSpeech textToSpeech;
   final VocabularyRepository vocabularyRepository;
+  final WordLookupRepository wordLookupRepository;
 
   @override
   State<DialogueReaderPage> createState() => _DialogueReaderPageState();
@@ -97,114 +101,28 @@ class _DialogueReaderPageState extends State<DialogueReaderPage> {
   }
 
   Future<void> _showWordActions(String word, VocabularyEntry? existing) async {
-    var meaning = existing?.meaning ?? '';
+    final normalizedWord = normalizeVocabularyWord(word);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            24,
-            4,
-            24,
-            24 + MediaQuery.viewInsetsOf(sheetContext).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      word,
-                      style: Theme.of(sheetContext).textTheme.headlineSmall,
-                    ),
-                  ),
-                  if (existing != null)
-                    Chip(
-                      avatar: Icon(
-                        _vocabularyStatusIcon(existing.status),
-                        size: 18,
-                        color: _vocabularyStatusColor(
-                          sheetContext,
-                          existing.status,
-                        ),
-                      ),
-                      label: Text(existing.status.label),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                initialValue: meaning,
-                decoration: const InputDecoration(
-                  labelText: 'Significado em português',
-                  hintText: 'Opcional',
-                ),
-                textCapitalization: TextCapitalization.sentences,
-                autofocus: existing == null,
-                onChanged: (value) => meaning = value,
-              ),
-              const SizedBox(height: 12),
-              const ListTile(
-                enabled: false,
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.search),
-                title: Text('Consultar palavra'),
-                subtitle: Text(
-                  'Consultas externas não fazem parte desta etapa',
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () async {
-                    try {
-                      await widget.vocabularyRepository.saveWord(
-                        word: word,
-                        meaning: meaning,
-                        sourceTextId: widget.text.id,
-                      );
-                      if (!mounted || !sheetContext.mounted) return;
-                      Navigator.of(sheetContext).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            existing == null
-                                ? 'Palavra salva no vocabulário.'
-                                : 'Palavra atualizada no vocabulário.',
-                          ),
-                        ),
-                      );
-                    } on Object {
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Não foi possível salvar a palavra.'),
-                        ),
-                      );
-                    }
-                  },
-                  icon: Icon(
-                    existing == null
-                        ? Icons.bookmark_add_outlined
-                        : Icons.save_outlined,
-                  ),
-                  label: Text(
-                    existing == null
-                        ? 'Salvar no vocabulário'
-                        : 'Atualizar significado',
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      builder: (_) => WordLookupSheet(
+        word: normalizedWord,
+        sourceTextId: widget.text.id,
+        lookupRepository: widget.wordLookupRepository,
+        vocabularyRepository: widget.vocabularyRepository,
+        existingEntry: existing,
+        onSpeak: _speakWord,
       ),
     );
+  }
+
+  Future<void> _speakWord(String word) async {
+    final americanVoices = _voices.where(
+      (voice) => voice.locale.toLowerCase() == 'en-us',
+    );
+    final voice = americanVoices.isEmpty ? null : americanVoices.first;
+    await widget.textToSpeech.speak(word, rate: _rate, voice: voice);
   }
 
   Future<void> _showSpeechSettings() async {
@@ -462,14 +380,6 @@ Color _vocabularyStatusColor(BuildContext context, VocabularyStatus status) {
     ).colorScheme.onSurfaceVariant,
     VocabularyStatus.learning => Theme.of(context).colorScheme.error,
     VocabularyStatus.known => const Color(0xFF247A45),
-  };
-}
-
-IconData _vocabularyStatusIcon(VocabularyStatus status) {
-  return switch (status) {
-    VocabularyStatus.unreviewed => Icons.circle_outlined,
-    VocabularyStatus.learning => Icons.error_outline,
-    VocabularyStatus.known => Icons.check_circle_outline,
   };
 }
 

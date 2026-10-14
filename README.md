@@ -9,6 +9,8 @@ Aplicativo Android offline-first para estudar inglês com textos bilíngues, áu
 - leitura alinhada em inglês e português;
 - destaque de segmentos equivalentes nos dois idiomas;
 - reprodução em inglês pelo TTS do Android;
+- tradução sob demanda de palavras pela MyMemory e pronúncia pelo TTS;
+- base simulada de geração de textos com IA, com prévia obrigatória;
 - vocabulário global com significado e estados de aprendizagem;
 - persistência local, sem necessidade de conta ou servidor.
 
@@ -18,6 +20,10 @@ Aplicativo Android offline-first para estudar inglês com textos bilíngues, áu
 - Isar Community para persistência local;
 - `flutter_tts` para síntese de voz;
 - testes de domínio e interface com Flutter Test.
+
+O modo **Gerar com IA** desta versão usa uma simulação local. A futura
+integração será feita somente por uma API própria via HTTPS; nenhuma chave de
+provedor será incluída no aplicativo.
 
 ## Executar o projeto
 
