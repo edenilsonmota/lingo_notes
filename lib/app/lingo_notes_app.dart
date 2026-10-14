@@ -2,11 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../features/notebooks/domain/notebook_repository.dart';
 import '../features/notebooks/presentation/notebooks_page.dart';
+import '../features/texts/domain/dialogue_file_picker.dart';
+import '../features/texts/domain/text_repository.dart';
 
 class LingoNotesApp extends StatelessWidget {
-  const LingoNotesApp({required this.repository, super.key});
+  const LingoNotesApp({
+    required this.notebookRepository,
+    required this.textRepository,
+    required this.filePicker,
+    super.key,
+  });
 
-  final NotebookRepository repository;
+  final NotebookRepository notebookRepository;
+  final TextRepository textRepository;
+  final DialogueFilePicker filePicker;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +37,11 @@ class LingoNotesApp extends StatelessWidget {
           border: OutlineInputBorder(),
         ),
       ),
-      home: NotebooksPage(repository: repository),
+      home: NotebooksPage(
+        repository: notebookRepository,
+        textRepository: textRepository,
+        filePicker: filePicker,
+      ),
     );
   }
 }

@@ -52,7 +52,18 @@ A primeira etapa está implementada:
 - tela vazia de um caderno preparada para receber textos;
 - testes das regras de ordenação e do formulário principal.
 
-Ainda não existem importação, leitor, TTS ou vocabulário. Não simule essas funções nem conecte APIs externas antes das etapas correspondentes.
+A segunda etapa também está implementada:
+
+- seleção nativa de um único arquivo `.json`;
+- parser e validação integral do Lingo Notes Dialogue JSON v1.0;
+- mensagens de validação com o caminho exato do campo inválido;
+- persistência do JSON original validado e metadados em uma coleção Isar;
+- UUID interno do texto independente do `id` do arquivo;
+- listagem dos textos dentro do caderno;
+- exclusão transacional dos textos quando o caderno é excluído;
+- testes de validação, garantia de não persistência e fluxo da interface.
+
+Ainda não existem leitor, TTS ou vocabulário. Não simule essas funções nem conecte APIs externas antes das etapas correspondentes.
 
 ## Estrutura
 
@@ -60,12 +71,17 @@ Ainda não existem importação, leitor, TTS ou vocabulário. Não simule essas 
 lib/
   main.dart                         # inicialização do Flutter e do banco
   app/
+    app_database.dart               # abertura única do Isar e schemas
     lingo_notes_app.dart            # MaterialApp e tema global
   features/
     notebooks/
       domain/                       # modelos e contratos sem Flutter/Isar
       data/                         # records e repositórios Isar
       presentation/                 # páginas, diálogos e widgets
+    texts/
+      domain/                       # diálogo, validação e caso de importação
+      data/                         # seleção de arquivo e persistência Isar
+      presentation/                 # listagem e fluxo de importação
 context/                            # especificação e schema fornecidos
 test/
   features/                         # testes espelhando as funcionalidades

@@ -1,7 +1,7 @@
 import 'package:isar_community/isar.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../texts/data/imported_text_record.dart';
 import '../domain/notebook.dart';
 import '../domain/notebook_repository.dart';
 import 'notebook_record.dart';
@@ -11,16 +11,6 @@ class IsarNotebookRepository implements NotebookRepository {
 
   final Isar _isar;
   static const _uuid = Uuid();
-
-  static Future<IsarNotebookRepository> open() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final isar = await Isar.open(
-      [NotebookRecordSchema],
-      directory: directory.path,
-      name: 'lingo_notes',
-    );
-    return IsarNotebookRepository(isar);
-  }
 
   @override
   Stream<List<Notebook>> watchAll() {
@@ -90,6 +80,10 @@ class IsarNotebookRepository implements NotebookRepository {
     if (record == null) return;
 
     await _isar.writeTxn(() async {
+      await _isar.importedTextRecords
+          .filter()
+          .notebookIdEqualTo(id)
+          .deleteAll();
       await _isar.notebookRecords.delete(record.id);
     });
   }

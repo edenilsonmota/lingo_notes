@@ -5,11 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingo_notes/app/lingo_notes_app.dart';
 import 'package:lingo_notes/features/notebooks/domain/notebook.dart';
 import 'package:lingo_notes/features/notebooks/domain/notebook_repository.dart';
+import 'package:lingo_notes/features/texts/domain/dialogue.dart';
+import 'package:lingo_notes/features/texts/domain/dialogue_file_picker.dart';
+import 'package:lingo_notes/features/texts/domain/text_repository.dart';
 
 void main() {
   testWidgets('cria um caderno pela tela inicial', (tester) async {
     final repository = FakeNotebookRepository();
-    await tester.pumpWidget(LingoNotesApp(repository: repository));
+    await tester.pumpWidget(_buildApp(repository));
     await tester.pumpAndSettle();
 
     expect(find.text('Crie seu primeiro caderno'), findsOneWidget);
@@ -30,7 +33,7 @@ void main() {
 
   testWidgets('impede criar caderno sem nome', (tester) async {
     final repository = FakeNotebookRepository();
-    await tester.pumpWidget(LingoNotesApp(repository: repository));
+    await tester.pumpWidget(_buildApp(repository));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Novo caderno'));
@@ -41,6 +44,35 @@ void main() {
     expect(find.text('Informe o nome do caderno.'), findsOneWidget);
     expect(repository.items, isEmpty);
   });
+}
+
+Widget _buildApp(NotebookRepository repository) {
+  return LingoNotesApp(
+    notebookRepository: repository,
+    textRepository: _EmptyTextRepository(),
+    filePicker: const _CancelledFilePicker(),
+  );
+}
+
+class _EmptyTextRepository implements TextRepository {
+  @override
+  Future<void> save({
+    required String notebookId,
+    required DialogueDocument dialogue,
+    required String sourceJson,
+  }) async {}
+
+  @override
+  Stream<List<ImportedText>> watchByNotebook(String notebookId) {
+    return Stream.value(const []);
+  }
+}
+
+class _CancelledFilePicker implements DialogueFilePicker {
+  const _CancelledFilePicker();
+
+  @override
+  Future<PickedDialogueFile?> pickJson() async => null;
 }
 
 class FakeNotebookRepository implements NotebookRepository {

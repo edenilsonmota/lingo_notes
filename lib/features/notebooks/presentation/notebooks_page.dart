@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 
+import '../../texts/domain/dialogue_file_picker.dart';
+import '../../texts/domain/text_repository.dart';
+import '../../texts/presentation/notebook_texts_page.dart';
 import '../domain/notebook.dart';
 import '../domain/notebook_repository.dart';
-import 'notebook_detail_page.dart';
 import 'notebook_form_dialog.dart';
 
 class NotebooksPage extends StatefulWidget {
-  const NotebooksPage({required this.repository, super.key});
+  const NotebooksPage({
+    required this.repository,
+    required this.textRepository,
+    required this.filePicker,
+    super.key,
+  });
 
   final NotebookRepository repository;
+  final TextRepository textRepository;
+  final DialogueFilePicker filePicker;
 
   @override
   State<NotebooksPage> createState() => _NotebooksPageState();
@@ -181,8 +190,11 @@ class _NotebooksPageState extends State<NotebooksPage> {
                       index: index,
                       onOpen: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) =>
-                              NotebookDetailPage(notebook: notebook),
+                          builder: (_) => NotebookTextsPage(
+                            notebook: notebook,
+                            textRepository: widget.textRepository,
+                            filePicker: widget.filePicker,
+                          ),
                         ),
                       ),
                       onEdit: () => _openForm(notebook),
@@ -252,7 +264,7 @@ class _NotebookCard extends StatelessWidget {
                       ],
                       const SizedBox(height: 10),
                       Text(
-                        'Nenhum texto',
+                        'Ver textos',
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(
                               color: Theme.of(context)
