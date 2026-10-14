@@ -5,8 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lingo_notes/features/texts/domain/dialogue.dart';
 import 'package:lingo_notes/features/texts/domain/dialogue_parser.dart';
 import 'package:lingo_notes/features/texts/presentation/dialogue_reader_page.dart';
+import 'package:lingo_notes/features/vocabulary/domain/vocabulary_entry.dart';
 
 import '../../support/fake_text_to_speech.dart';
+import '../../support/memory_vocabulary_repository.dart';
 import 'dialogue_parser_test.dart' show validDialogueJson;
 
 void main() {
@@ -90,9 +92,64 @@ void main() {
     expect(find.text('Consultar palavra'), findsOneWidget);
     expect(find.text('Salvar no vocabulário'), findsOneWidget);
   });
+
+  testWidgets('salva palavra com significado e origem do texto', (
+    tester,
+  ) async {
+    final repository = MemoryVocabularyRepository();
+    await tester.pumpWidget(
+      readerApp(FakeTextToSpeech(), vocabularyRepository: repository),
+    );
+    await tester.pumpAndSettle();
+
+    const wordKey = ValueKey('segment-english-line-001-s1-0');
+    await tester.longPress(find.byKey(wordKey));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'O que');
+    final saveButton = find.widgetWithText(
+      FilledButton,
+      'Salvar no vocabulário',
+    );
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(repository.entries, hasLength(1));
+    expect(repository.entries.single.normalizedWord, 'what');
+    expect(repository.entries.single.meaning, 'O que');
+    expect(repository.entries.single.sourceTextIds, ['text-1']);
+  });
+
+  testWidgets('indica no leitor o estado de palavra já salva', (tester) async {
+    final date = DateTime.utc(2026, 10, 14);
+    final repository = MemoryVocabularyRepository([
+      VocabularyEntry(
+        id: 'word-1',
+        word: 'What',
+        normalizedWord: 'what',
+        meaning: 'O que',
+        status: VocabularyStatus.known,
+        savedAt: date,
+        updatedAt: date,
+        sourceTextIds: const ['text-1'],
+      ),
+    ]);
+    await tester.pumpWidget(
+      readerApp(FakeTextToSpeech(), vocabularyRepository: repository),
+    );
+    await tester.pumpAndSettle();
+
+    const wordKey = ValueKey('segment-english-line-001-s1-0');
+    final word = tester.widget<Text>(find.byKey(wordKey));
+    expect(word.semanticsLabel, 'What, Conhecida');
+    expect(word.style?.fontWeight, FontWeight.w700);
+  });
 }
 
-Widget readerApp(FakeTextToSpeech speech) {
+Widget readerApp(
+  FakeTextToSpeech speech, {
+  MemoryVocabularyRepository? vocabularyRepository,
+}) {
   final dialogue = const DialogueParser().parse(
     jsonEncode(validDialogueJson()),
   );
@@ -106,6 +163,8 @@ Widget readerApp(FakeTextToSpeech speech) {
         importedAt: DateTime.utc(2026, 10, 14),
       ),
       textToSpeech: speech,
+      vocabularyRepository:
+          vocabularyRepository ?? MemoryVocabularyRepository(),
     ),
   );
 }

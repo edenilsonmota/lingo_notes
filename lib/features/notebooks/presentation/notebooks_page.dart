@@ -4,6 +4,8 @@ import '../../texts/domain/dialogue_file_picker.dart';
 import '../../texts/domain/text_repository.dart';
 import '../../texts/domain/text_to_speech.dart';
 import '../../texts/presentation/notebook_texts_page.dart';
+import '../../vocabulary/domain/vocabulary_repository.dart';
+import '../../vocabulary/presentation/vocabulary_page.dart';
 import '../domain/notebook.dart';
 import '../domain/notebook_repository.dart';
 import 'notebook_form_dialog.dart';
@@ -14,6 +16,7 @@ class NotebooksPage extends StatefulWidget {
     required this.textRepository,
     required this.filePicker,
     required this.textToSpeech,
+    required this.vocabularyRepository,
     super.key,
   });
 
@@ -21,6 +24,7 @@ class NotebooksPage extends StatefulWidget {
   final TextRepository textRepository;
   final DialogueFilePicker filePicker;
   final TextToSpeech textToSpeech;
+  final VocabularyRepository vocabularyRepository;
 
   @override
   State<NotebooksPage> createState() => _NotebooksPageState();
@@ -129,6 +133,16 @@ class _NotebooksPageState extends State<NotebooksPage> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Abrir vocabulário',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) =>
+                    VocabularyPage(repository: widget.vocabularyRepository),
+              ),
+            ),
+            icon: const Icon(Icons.bookmarks_outlined),
+          ),
           PopupMenuButton<NotebookSortMode>(
             tooltip: 'Ordenar cadernos',
             icon: const Icon(Icons.sort),
@@ -198,6 +212,7 @@ class _NotebooksPageState extends State<NotebooksPage> {
                             textRepository: widget.textRepository,
                             filePicker: widget.filePicker,
                             textToSpeech: widget.textToSpeech,
+                            vocabularyRepository: widget.vocabularyRepository,
                           ),
                         ),
                       ),

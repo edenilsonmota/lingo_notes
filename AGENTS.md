@@ -69,10 +69,19 @@ A terceira etapa também está implementada:
 - segmentos alinhados, tocáveis e destacados nos dois idiomas;
 - TTS do Android por linha ou texto completo, montado somente com tokens em inglês;
 - seleção de voz inglesa e controle de velocidade;
-- pressão longa em palavra inglesa com indicação das futuras ações de consulta e salvamento;
+- pressão longa em palavra inglesa como ponto de integração com o vocabulário;
 - regras de leitura e alinhamento no domínio, integração de TTS injetável em `data` e testes de domínio/interface.
 
-Ainda não existe vocabulário persistente. Até a etapa correspondente, as ações de consultar e salvar palavra devem permanecer claramente indisponíveis e não podem simular persistência ou consulta externa.
+A quarta etapa também está implementada:
+
+- vocabulário global persistido localmente em coleção Isar própria;
+- normalização de palavras e mesclagem de origens para impedir duplicatas;
+- estados `unreviewed`, `learning` e `known`, com alteração rápida e filtros;
+- salvamento e atualização manual do significado a partir do leitor;
+- indicação visual e semântica no leitor para palavras já salvas;
+- testes das regras de normalização, duplicidade, filtros, status e integração com o leitor.
+
+O MVP especificado está funcional. Não adicionar repetição espaçada, consultas externas, geração de áudio, IA, login ou nuvem sem novo requisito explícito.
 
 ## Estrutura
 
@@ -91,6 +100,10 @@ lib/
       domain/                       # diálogo, validação, leitura e contratos
       data/                         # arquivos, Isar e adaptação do TTS
       presentation/                 # importação, listagem e leitor EN/PT
+    vocabulary/
+      domain/                       # modelo, normalização e contrato
+      data/                         # record e repositório Isar
+      presentation/                 # lista, filtros e alteração de estado
 context/                            # especificação e schema fornecidos
 test/
   features/                         # testes espelhando as funcionalidades

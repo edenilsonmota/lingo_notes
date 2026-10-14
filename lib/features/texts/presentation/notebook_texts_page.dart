@@ -7,6 +7,7 @@ import '../domain/dialogue_parser.dart';
 import '../domain/import_dialogue_file.dart';
 import '../domain/text_repository.dart';
 import '../domain/text_to_speech.dart';
+import '../../vocabulary/domain/vocabulary_repository.dart';
 import 'dialogue_reader_page.dart';
 
 class NotebookTextsPage extends StatefulWidget {
@@ -15,6 +16,7 @@ class NotebookTextsPage extends StatefulWidget {
     required this.textRepository,
     required this.filePicker,
     required this.textToSpeech,
+    required this.vocabularyRepository,
     super.key,
   });
 
@@ -22,6 +24,7 @@ class NotebookTextsPage extends StatefulWidget {
   final TextRepository textRepository;
   final DialogueFilePicker filePicker;
   final TextToSpeech textToSpeech;
+  final VocabularyRepository vocabularyRepository;
 
   @override
   State<NotebookTextsPage> createState() => _NotebookTextsPageState();
@@ -157,6 +160,7 @@ class _NotebookTextsPageState extends State<NotebookTextsPage> {
                         builder: (_) => DialogueReaderPage(
                           text: text,
                           textToSpeech: widget.textToSpeech,
+                          vocabularyRepository: widget.vocabularyRepository,
                         ),
                       ),
                     ),

@@ -3,6 +3,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../features/notebooks/data/notebook_record.dart';
 import '../features/texts/data/imported_text_record.dart';
+import '../features/vocabulary/data/vocabulary_entry_record.dart';
 
 class AppDatabase {
   const AppDatabase(this.isar);
@@ -12,7 +13,11 @@ class AppDatabase {
   static Future<AppDatabase> open() async {
     final directory = await getApplicationDocumentsDirectory();
     final isar = await Isar.open(
-      [NotebookRecordSchema, ImportedTextRecordSchema],
+      [
+        NotebookRecordSchema,
+        ImportedTextRecordSchema,
+        VocabularyEntryRecordSchema,
+      ],
       directory: directory.path,
       name: 'lingo_notes',
     );

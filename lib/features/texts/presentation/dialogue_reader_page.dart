@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../vocabulary/domain/vocabulary_entry.dart';
+import '../../vocabulary/domain/vocabulary_repository.dart';
 import '../domain/dialogue.dart';
 import '../domain/dialogue_reader.dart';
 import '../domain/text_to_speech.dart';
@@ -10,11 +12,13 @@ class DialogueReaderPage extends StatefulWidget {
   const DialogueReaderPage({
     required this.text,
     required this.textToSpeech,
+    required this.vocabularyRepository,
     super.key,
   });
 
   final ImportedText text;
   final TextToSpeech textToSpeech;
+  final VocabularyRepository vocabularyRepository;
 
   @override
   State<DialogueReaderPage> createState() => _DialogueReaderPageState();
@@ -31,12 +35,14 @@ class _DialogueReaderPageState extends State<DialogueReaderPage> {
   bool _speaking = false;
   String? _selectedLineId;
   String? _selectedSegmentId;
+  late final Stream<List<VocabularyEntry>> _vocabularyEntries;
 
   DialogueDocument get _dialogue => widget.text.dialogue;
 
   @override
   void initState() {
     super.initState();
+    _vocabularyEntries = widget.vocabularyRepository.watchAll();
     _loadVoices();
   }
 
@@ -90,35 +96,109 @@ class _DialogueReaderPageState extends State<DialogueReaderPage> {
     });
   }
 
-  Future<void> _showWordActions(String word) async {
+  Future<void> _showWordActions(String word, VocabularyEntry? existing) async {
+    var meaning = existing?.meaning ?? '';
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            4,
+            24,
+            24 + MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
-                child: Text(
-                  word,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      word,
+                      style: Theme.of(sheetContext).textTheme.headlineSmall,
+                    ),
+                  ),
+                  if (existing != null)
+                    Chip(
+                      avatar: Icon(
+                        _vocabularyStatusIcon(existing.status),
+                        size: 18,
+                        color: _vocabularyStatusColor(
+                          sheetContext,
+                          existing.status,
+                        ),
+                      ),
+                      label: Text(existing.status.label),
+                    ),
+                ],
               ),
+              const SizedBox(height: 16),
+              TextFormField(
+                initialValue: meaning,
+                decoration: const InputDecoration(
+                  labelText: 'Significado em português',
+                  hintText: 'Opcional',
+                ),
+                textCapitalization: TextCapitalization.sentences,
+                autofocus: existing == null,
+                onChanged: (value) => meaning = value,
+              ),
+              const SizedBox(height: 12),
               const ListTile(
                 enabled: false,
+                contentPadding: EdgeInsets.zero,
                 leading: Icon(Icons.search),
                 title: Text('Consultar palavra'),
-                subtitle: Text('Disponível na etapa de vocabulário'),
+                subtitle: Text(
+                  'Consultas externas não fazem parte desta etapa',
+                ),
               ),
-              const ListTile(
-                enabled: false,
-                leading: Icon(Icons.bookmark_add_outlined),
-                title: Text('Salvar no vocabulário'),
-                subtitle: Text('Disponível na etapa de vocabulário'),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    try {
+                      await widget.vocabularyRepository.saveWord(
+                        word: word,
+                        meaning: meaning,
+                        sourceTextId: widget.text.id,
+                      );
+                      if (!mounted || !sheetContext.mounted) return;
+                      Navigator.of(sheetContext).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            existing == null
+                                ? 'Palavra salva no vocabulário.'
+                                : 'Palavra atualizada no vocabulário.',
+                          ),
+                        ),
+                      );
+                    } on Object {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Não foi possível salvar a palavra.'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: Icon(
+                    existing == null
+                        ? Icons.bookmark_add_outlined
+                        : Icons.save_outlined,
+                  ),
+                  label: Text(
+                    existing == null
+                        ? 'Salvar no vocabulário'
+                        : 'Atualizar significado',
+                  ),
+                ),
               ),
             ],
           ),
@@ -224,55 +304,68 @@ class _DialogueReaderPageState extends State<DialogueReaderPage> {
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final horizontalPadding = constraints.maxWidth > 760
-              ? (constraints.maxWidth - 720) / 2
-              : 16.0;
-          return ListView.separated(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              16,
-              horizontalPadding,
-              32,
-            ),
-            itemCount: _dialogue.lines.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final line = _dialogue.lines[index];
-              return _LineCard(
-                line: line,
-                lineNumber: index + 1,
-                speaking: _speaking,
-                english: Text.rich(
-                  TextSpan(
-                    children: _spansForLine(
-                      context,
-                      line,
-                      DialogueLanguage.english,
-                      (segmentId) => _selectSegment(line.id, segmentId),
-                      _showWordActions,
-                    ),
-                  ),
+      body: StreamBuilder<List<VocabularyEntry>>(
+        stream: _vocabularyEntries,
+        builder: (context, vocabularySnapshot) {
+          final entriesByWord = {
+            for (final entry
+                in vocabularySnapshot.data ?? const <VocabularyEntry>[])
+              entry.normalizedWord: entry,
+          };
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final horizontalPadding = constraints.maxWidth > 760
+                  ? (constraints.maxWidth - 720) / 2
+                  : 16.0;
+              return ListView.separated(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  16,
+                  horizontalPadding,
+                  32,
                 ),
-                portuguese: _showTranslation
-                    ? Text.rich(
-                        TextSpan(
-                          children: _spansForLine(
-                            context,
-                            line,
-                            DialogueLanguage.portuguese,
-                            (segmentId) => _selectSegment(line.id, segmentId),
-                            _showWordActions,
-                          ),
+                itemCount: _dialogue.lines.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final line = _dialogue.lines[index];
+                  return _LineCard(
+                    line: line,
+                    lineNumber: index + 1,
+                    speaking: _speaking,
+                    english: Text.rich(
+                      TextSpan(
+                        children: _spansForLine(
+                          context,
+                          line,
+                          DialogueLanguage.english,
+                          (segmentId) => _selectSegment(line.id, segmentId),
+                          entriesByWord,
                         ),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      )
-                    : null,
-                onSpeak: () =>
-                    _speak(buildLineText(line, DialogueLanguage.english)),
+                      ),
+                    ),
+                    portuguese: _showTranslation
+                        ? Text.rich(
+                            TextSpan(
+                              children: _spansForLine(
+                                context,
+                                line,
+                                DialogueLanguage.portuguese,
+                                (segmentId) =>
+                                    _selectSegment(line.id, segmentId),
+                                entriesByWord,
+                              ),
+                            ),
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          )
+                        : null,
+                    onSpeak: () =>
+                        _speak(buildLineText(line, DialogueLanguage.english)),
+                  );
+                },
               );
             },
           );
@@ -293,7 +386,7 @@ class _DialogueReaderPageState extends State<DialogueReaderPage> {
     DialogueLine line,
     DialogueLanguage language,
     ValueChanged<String> onSelectSegment,
-    ValueChanged<String> onLongPressWord,
+    Map<String, VocabularyEntry> entriesByWord,
   ) {
     final baseStyle = Theme.of(context).textTheme.bodyLarge!;
     final spans = <InlineSpan>[];
@@ -318,6 +411,21 @@ class _DialogueReaderPageState extends State<DialogueReaderPage> {
       for (var partIndex = 0; partIndex < parts.length; partIndex++) {
         final part = parts[partIndex];
         final isWord = _wordPattern.hasMatch(part);
+        final vocabularyEntry = language == DialogueLanguage.english && isWord
+            ? entriesByWord[normalizeVocabularyWord(part)]
+            : null;
+        final wordStyle = vocabularyEntry == null
+            ? style
+            : style.copyWith(
+                color: _vocabularyStatusColor(context, vocabularyEntry.status),
+                backgroundColor: selected
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : _vocabularyStatusColor(
+                        context,
+                        vocabularyEntry.status,
+                      ).withValues(alpha: 0.14),
+                fontWeight: FontWeight.w700,
+              );
         spans.add(
           WidgetSpan(
             alignment: PlaceholderAlignment.baseline,
@@ -326,14 +434,17 @@ class _DialogueReaderPageState extends State<DialogueReaderPage> {
               behavior: HitTestBehavior.opaque,
               onTap: () => onSelectSegment(token.segmentId!),
               onLongPress: language == DialogueLanguage.english && isWord
-                  ? () => onLongPressWord(part)
+                  ? () => _showWordActions(part, vocabularyEntry)
                   : null,
               child: Text(
                 part,
                 key: ValueKey(
                   'segment-${language.name}-${line.id}-${token.segmentId}-$partIndex',
                 ),
-                style: style,
+                style: wordStyle,
+                semanticsLabel: vocabularyEntry == null
+                    ? null
+                    : '$part, ${vocabularyEntry.status.label}',
               ),
             ),
           ),
@@ -342,6 +453,24 @@ class _DialogueReaderPageState extends State<DialogueReaderPage> {
     }
     return spans;
   }
+}
+
+Color _vocabularyStatusColor(BuildContext context, VocabularyStatus status) {
+  return switch (status) {
+    VocabularyStatus.unreviewed => Theme.of(
+      context,
+    ).colorScheme.onSurfaceVariant,
+    VocabularyStatus.learning => Theme.of(context).colorScheme.error,
+    VocabularyStatus.known => const Color(0xFF247A45),
+  };
+}
+
+IconData _vocabularyStatusIcon(VocabularyStatus status) {
+  return switch (status) {
+    VocabularyStatus.unreviewed => Icons.circle_outlined,
+    VocabularyStatus.learning => Icons.error_outline,
+    VocabularyStatus.known => Icons.check_circle_outline,
+  };
 }
 
 class _LineCard extends StatelessWidget {

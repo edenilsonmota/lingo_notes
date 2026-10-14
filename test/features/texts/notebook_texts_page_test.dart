@@ -12,6 +12,7 @@ import 'package:lingo_notes/features/texts/presentation/notebook_texts_page.dart
 
 import 'dialogue_parser_test.dart' show validDialogueJson;
 import '../../support/fake_text_to_speech.dart';
+import '../../support/memory_vocabulary_repository.dart';
 
 void main() {
   testWidgets('importa e lista um arquivo válido', (tester) async {
@@ -61,6 +62,7 @@ Widget testApp(TextRepository repository, DialogueFilePicker picker) {
       textRepository: repository,
       filePicker: picker,
       textToSpeech: FakeTextToSpeech(),
+      vocabularyRepository: MemoryVocabularyRepository(),
     ),
   );
 }
