@@ -11,12 +11,14 @@ Idiomas fixos da primeira versão:
 - origem: inglês dos Estados Unidos (`en-US`);
 - apoio: português do Brasil (`pt-BR`).
 
-As fontes de verdade do produto estão em:
+Este arquivo é a referência durável de produto, arquitetura e escopo para as próximas implementações. Os contratos executáveis complementares são:
 
-- `context/lingo_notes_app_spec.md`: requisitos, escopo e etapas;
-- `context/lingo_notes_dialogue.schema.json`: schema canônico de importação.
+- `lib/features/texts/domain/dialogue_parser.dart` e seus testes: validação canônica da importação v1.0;
+- modelos e contratos em cada pasta `domain/`: regras e limites entre camadas;
+- `lib/app/app_database.dart`: coleções abertas pelo aplicativo;
+- `pubspec.yaml`: dependências realmente adotadas pelo projeto.
 
-Leia os dois arquivos antes de alterar regras de domínio, importação, leitor, TTS ou vocabulário. Uma nova implementação não deve enfraquecer as validações do schema.
+Os antigos arquivos de planejamento em `context/` não são necessários para evoluir o projeto. Não criar dependência de execução ou documentação sobre eles. Ao mudar uma regra, atualizar juntos este guia, o domínio e os testes correspondentes; não enfraquecer silenciosamente contratos já aceitos.
 
 ## Escopo e limites
 
@@ -27,7 +29,7 @@ O MVP inclui:
 - listagem dos textos de cada caderno;
 - leitor com segmentos EN/PT alinhados;
 - TTS por linha e texto completo;
-- consulta e persistência de palavras em um vocabulário global;
+- persistência, significado manual e classificação de palavras em um vocabulário global;
 - funcionamento local sem conta ou servidor.
 
 Não implementar sem um requisito posterior explícito:
@@ -39,7 +41,7 @@ Não implementar sem um requisito posterior explícito:
 - repetição espaçada ou estatísticas avançadas;
 - compartilhamento público de cadernos.
 
-A internet só poderá ser usada futuramente por uma ação explícita do usuário para dicionário, tradução ou IA. As funções principais precisam continuar disponíveis offline.
+A consulta a dicionário ainda não está implementada. A internet só poderá ser usada futuramente por uma ação explícita do usuário para dicionário, tradução ou IA. As funções principais precisam continuar disponíveis offline e falhas de rede nunca podem bloquear cadernos, leitura, TTS local ou vocabulário salvo.
 
 ## Estado atual
 
@@ -104,7 +106,6 @@ lib/
       domain/                       # modelo, normalização e contrato
       data/                         # record e repositório Isar
       presentation/                 # lista, filtros e alteração de estado
-context/                            # especificação e schema fornecidos
 test/
   features/                         # testes espelhando as funcionalidades
 ```
@@ -137,23 +138,66 @@ Alterações persistentes devem passar por `NotebookRepository`. Ao editar, atua
 
 ## Contrato de importação
 
-O formato aceito deve ser exatamente `english-notebook-dialogue`, versão `1.0`. Exigir `id`, `title`, `contentType`, `sourceLanguage`, `targetLanguage` e ao menos uma linha.
+O formato canônico é **Lingo Notes Dialogue JSON v1.0**. O documento raiz é um objeto JSON e aceita somente estes campos:
+
+| Campo | Regra |
+|---|---|
+| `format` | obrigatório e exatamente `english-notebook-dialogue` |
+| `version` | obrigatório e exatamente `1.0` |
+| `id` | texto obrigatório e não vazio; identifica a origem, não o registro local |
+| `title` | texto obrigatório e não vazio |
+| `contentType` | obrigatório; somente `dialogue` ou `narrative` |
+| `sourceLanguage` | obrigatório e exatamente `en-US` |
+| `targetLanguage` | obrigatório e exatamente `pt-BR` |
+| `level` | texto opcional |
+| `tags` | lista opcional de textos não vazios e sem itens duplicados |
+| `lines` | lista obrigatória com pelo menos uma linha |
 
 `english-notebook-dialogue` é somente o identificador técnico estável do protocolo de importação. Ele deve permanecer inalterado por compatibilidade com o schema v1.0 e não representa o nome do aplicativo. O nome exibido do formato e do produto é **Lingo Notes**.
 
-Regras obrigatórias:
+Cada linha aceita somente `id`, `speaker`, `segments`, `en` e `pt`:
 
-1. `contentType` aceita apenas `dialogue` ou `narrative`.
-2. `sourceLanguage` é `en-US` e `targetLanguage` é `pt-BR`.
-3. IDs de linha são únicos no arquivo.
-4. IDs de segmento são únicos dentro de cada linha.
-5. Todo `segmentId` usado nos tokens `en` ou `pt` existe em `segments` da mesma linha.
-6. Cada token contém somente `segmentId` ou somente `text`.
-7. Importações inválidas mostram erros compreensíveis e não gravam nenhum dado.
-8. O arquivo original nunca é alterado.
-9. O ID persistido do texto é gerado pelo aplicativo e não depende do `id` importado.
+- `id`, `segments`, `en` e `pt` são obrigatórios;
+- `id` é um texto não vazio e único no documento;
+- `speaker` é um texto não vazio opcional; omiti-lo em narrativas sem falante;
+- `segments`, `en` e `pt` são listas não vazias.
 
-Criar testes para formato/versão, obrigatórios, duplicidades e referências inexistentes antes de considerar a importação concluída.
+Cada segmento aceita exatamente `id`, `en` e `pt`, todos obrigatórios. `en` e `pt` são textos não vazios. O ID deve corresponder a `^[A-Za-z][A-Za-z0-9_-]*$` e ser único dentro da linha.
+
+Cada token das listas `en` e `pt` é um objeto de uma destas formas, sem propriedades adicionais:
+
+```json
+{ "segmentId": "s1" }
+```
+
+```json
+{ "text": " " }
+```
+
+Regras adicionais obrigatórias:
+
+1. Objetos raiz, linhas, segmentos e tokens rejeitam propriedades desconhecidas.
+2. Todo `segmentId` usado nos tokens existe em `segments` da mesma linha e segue o mesmo padrão de ID.
+3. O token contém somente `segmentId` ou somente `text`; `text` nunca é vazio.
+4. Tokens são renderizados na ordem declarada em cada idioma, mesmo quando EN e PT usam ordens diferentes.
+5. `text` representa espaços, pontuação ou conteúdo deliberadamente não alinhado.
+6. Importações inválidas exibem todos os problemas compreensíveis com o caminho do campo e não gravam dado algum.
+7. O JSON original validado é preservado integralmente e nunca é alterado ou reescrito.
+8. O ID persistido do texto é um UUID gerado pelo aplicativo e não depende do `id` importado.
+9. Mudanças incompatíveis exigem uma nova versão do protocolo; não reinterpretar arquivos `1.0`.
+
+Manter testes para formato/versão, tipos, campos obrigatórios e extras, listas vazias, duplicidades, padrão dos IDs e referências inexistentes.
+
+### Produção de conteúdo compatível
+
+Ao gerar ou converter conteúdo para esse formato:
+
+- retornar JSON válido, sem Markdown ou comentários;
+- criar segmentos curtos que preservem uma unidade útil de sentido;
+- nunca separar phrasal verbs, expressões fixas, contrações ou estruturas interdependentes;
+- usar os mesmos `segmentId` em EN e PT, mas ordenar os tokens naturalmente em cada idioma;
+- produzir tradução natural em português considerando a frase completa, nunca tradução mecânica palavra por palavra;
+- usar tokens `text` para espaços e pontuação e verificar que toda referência aponta para um segmento da própria linha.
 
 ## Contrato do leitor e TTS
 
@@ -162,7 +206,7 @@ Criar testes para formato/versão, obrigatórios, duplicidades e referências in
 - A tradução pode ser mostrada ou ocultada.
 - O texto falado é exclusivamente a concatenação dos tokens `en`; IDs, marcações e português nunca são enviados ao TTS.
 - Permitir TTS de uma linha e do texto inteiro, com voz inglesa e velocidade configuráveis.
-- Pressão longa em uma palavra inglesa deve expor a ação futura de consultar/salvar no vocabulário.
+- Pressão longa em uma palavra inglesa permite salvar ou atualizar significado e origem no vocabulário. Consulta externa permanece indisponível até requisito específico.
 - Testar a montagem do texto de TTS e o alinhamento de segmentos.
 
 ## Contrato do vocabulário global
@@ -175,7 +219,38 @@ Estados fixos:
 - `learning`: vermelho;
 - `known`: verde.
 
-Normalizar maiúsculas/minúsculas, espaços e pontuação externa para evitar duplicatas. Nunca separar phrasal verbs ou expressões quando a ação tiver sido feita sobre uma expressão completa. Não implementar repetição espaçada nesta fase.
+Normalizar maiúsculas/minúsculas, espaços repetidos, pontuação externa e variantes de apóstrofo para evitar duplicatas. Ao salvar novamente a mesma forma normalizada, preservar ID, `savedAt` e estado, atualizar `updatedAt`, manter significado anterior quando o novo estiver vazio e mesclar `sourceTextIds` sem repetição. Nunca separar phrasal verbs ou expressões quando a ação tiver sido feita sobre uma expressão completa. Não implementar repetição espaçada sem novo requisito.
+
+## Evolução futura
+
+Estas ideias preservam a direção original do produto, mas **não autorizam implementação automática**. Só iniciar uma delas mediante pedido explícito:
+
+1. exportar cadernos e vocabulário para backup e permitir restauração segura;
+2. gerar arquivos de áudio e manter cache offline por caderno;
+3. integrar IA para converter texto comum no protocolo oficial;
+4. criar revisão diária baseada no estado `learning`;
+5. oferecer sincronização ou backup remoto opcional;
+6. integrar consulta de dicionário acionada pelo usuário.
+
+Para qualquer evolução:
+
+- preservar funcionamento offline das funções existentes;
+- especificar comportamento de erro, cancelamento e ausência de rede;
+- manter compatibilidade com dados já salvos ou criar migração explícita;
+- introduzir permissões, rede e dependências somente no menor escopo necessário;
+- não enviar textos, vocabulário ou outros dados pessoais sem ação e consentimento claros do usuário.
+
+## Critério de conclusão
+
+Uma feature só está concluída quando:
+
+- regras ficam no domínio e integrações externas permanecem atrás de contratos injetáveis;
+- estados vazio, carregando, sucesso e erro relevantes estão tratados na interface;
+- dados existentes continuam legíveis e alterações de coleção Isar têm código gerado atualizado;
+- testes cobrem regras novas, falhas importantes e a interação principal;
+- `dart format lib test`, `flutter analyze` e `flutter test` passam;
+- o fluxo principal continua utilizável sem internet;
+- documentação e nomes exibidos continuam usando **Lingo Notes**.
 
 ## Convenções técnicas
 
